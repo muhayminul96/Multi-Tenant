@@ -1,6 +1,7 @@
 from rest_framework import status, permissions, viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import RegisterSerializer, TokenSerializer, VendorSerializer, ProductSerializer, OrderSerializer
 from .permissions import IsAdminOrVendor, IsVendorOrReadOnly, IsCustomer
@@ -22,14 +23,22 @@ class RegisterAPIView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class LoginAPIView(APIView):
-    permission_classes = [permissions.AllowAny]
-
     def post(self, request):
-        # Assuming you've handled JWT in simplejwt setup
-        serializer = TokenSerializer(data=request.data)
-        if serializer.is_valid():
-            return Response(serializer.validated_data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        username = request.data.get("username")
+        password = request.data.get("password")
+
+        user = authenticate(request, username=username, password=password)
+
+        if user is not None:
+            refresh = RefreshToken.for_user(user)
+            token_data = {
+                'access': str(refresh.access_token),
+                'refresh': str(refresh)
+            }
+            serializer = TokenSerializer(token_data)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response({'detail': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
 class LogoutAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]

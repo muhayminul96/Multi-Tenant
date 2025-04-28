@@ -9,7 +9,7 @@ router.register(r'vendors', VendorViewSet)
 
 urlpatterns = [
     path('api/register/', RegisterAPIView.as_view(), name='register'),
-    path('api/token/', LoginAPIView.as_view(), name='login'),
-    path('api/token/refresh/', LogoutAPIView.as_view(), name='logout'),
+    path('api/login/', LoginAPIView.as_view(), name='login'),
+    path('api/logout', LogoutAPIView.as_view(), name='logout'),
     path('api/', include(router.urls)),
 ]

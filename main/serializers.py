@@ -14,12 +14,10 @@ class UserSerializer(serializers.ModelSerializer):
         user = User.objects.create_user(**validated_data)
         return user
 
-class TokenSerializer(serializers.ModelSerializer):
-    refresh = serializers.CharField()
+class TokenSerializer(serializers.Serializer):
     access = serializers.CharField()
+    refresh = serializers.CharField()
 
-    class Meta:
-        fields = ['refresh', 'access']
 
 class RegisterSerializer(serializers.ModelSerializer):
     class Meta:
@@ -47,16 +45,19 @@ class OrderItemSerializer(serializers.ModelSerializer):
         model = OrderItem
         fields = ['id', 'product', 'product_name', 'quantity', 'created_at']
 
+
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True)
 
     class Meta:
         model = Order
-        fields = ['id', 'customer', 'items', 'created_at', 'is_active']
+        fields = ['id','items', 'created_at', 'is_active']
+        read_only_fields = ['customer', 'created_at']
 
     def create(self, validated_data):
         items_data = validated_data.pop('items')
-        order = Order.objects.create(**validated_data)
+        order = Order.objects.create(customer=self.context['request'].user, **validated_data)
+
         for item_data in items_data:
             OrderItem.objects.create(order=order, **item_data)
         return order
