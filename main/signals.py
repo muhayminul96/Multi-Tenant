@@ -8,7 +8,7 @@ def notify_vendor_on_order(sender, instance, created, **kwargs):
     if created:
         # Get all unique vendors from the order's items
         vendors = set()
-        for item in instance.order_items.all():
+        for item in instance.items.all():
             vendors.add(item.product.vendor)
 
         for vendor in vendors:
