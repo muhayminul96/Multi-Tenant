@@ -6,6 +6,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import RegisterSerializer, TokenSerializer, VendorSerializer, ProductSerializer, OrderSerializer
 from .permissions import IsAdminOrVendor, IsVendorOrReadOnly, IsCustomer
 from django.contrib.auth import get_user_model
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters
 from .models import Product, Order, OrderItem
 
 # User
@@ -67,6 +69,10 @@ class VendorViewSet(viewsets.ReadOnlyModelViewSet):
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['name']
+    ordering_fields = ['price', 'created_at']
+    filterset_fields = ['vendor']
     permission_classes = [permissions.IsAuthenticated, IsVendorOrReadOnly]
 
     def perform_create(self, serializer):

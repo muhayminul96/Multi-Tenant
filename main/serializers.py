@@ -55,9 +55,19 @@ class OrderSerializer(serializers.ModelSerializer):
         read_only_fields = ['customer', 'created_at']
 
     def create(self, validated_data):
-        items_data = validated_data.pop('items')
-        order = Order.objects.create(customer=self.context['request'].user, **validated_data)
+        order_items_data = validated_data.pop('items')
+        print(validated_data)
+        order = Order.objects.create(**validated_data)
 
-        for item_data in items_data:
-            OrderItem.objects.create(order=order, **item_data)
+        # Reduce stock for each ordered product
+        for item_data in order_items_data:
+
+            product = Product.objects.get(id=item_data['product'].id)  # Get the product
+            if product.stock >= item_data['quantity']:
+                product.stock -= item_data['quantity']  # Reduce stock
+                product.save()
+                OrderItem.objects.create(order=order, product=item_data['product'], quantity=item_data['quantity'])  # Create OrderItem
+            else:
+                raise serializers.ValidationError(f"Not enough stock for {product.name}.")  # Handle insufficient stock
+
         return order
